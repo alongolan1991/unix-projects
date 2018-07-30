@@ -66,45 +66,64 @@ int main(void)
 			 }
 
 	else if(pid == 0){
+		// get the length of the file name
 		if (recv(newfd, &name_len, sizeof(name_len), 0) < 0)
 		{
 			perror("recive");
 			return 1;
 		}
+		// creating buffer that contain the name;
 		char name[name_len + 1];
 		memset(name, 0 , sizeof(name));
 		memset(temp, 0, sizeof(temp));
+		// get the name of the file
 		if (recv(newfd, name, name_len, 0) < 0)
 		{
 			perror("recive");
 			return 1;
 		}
 			memset(action, 0 , sizeof(action));
+			// getting the command "get-file-info" or "download-file"
 		if (recv(newfd, action, sizeof(action), 0) < 0)
 		{
 			perror("recive");
 			return 1;
 		}
-		 strcpy ( temp, name);
-
+			// creating the path of the file
+		 	strcpy ( temp, name);
 			memset(file_path, 0 , sizeof(file_path));
-			strcat (file_path,"disc/");
+			strcat (file_path,"files/");
 			strcat (file_path,temp);
-
-					new_File = open(file_path, O_RDONLY);
-			if(new_File < 0){
-				perror("open");
-				return 1;
+			// check if the file exist
+			int file_exists;
+			if(open(file_path,O_EXCL) != -1){
+				file_exists = 0;
 			}
-			fstat(new_File, &st);
-			file_size = st.st_size;
-
-			if(send(newfd, &file_size, sizeof(file_size), 0) < 0)
+			else{
+				file_exists = 1;
+			}
+			// send the client message if the file exist or not
+			if(send(newfd, &file_exists, sizeof(file_exists), 0) < 0)
 				{
 					perror("send1");
 					return 1;
 				}
 
+				// open the file for reading
+			new_File = open(file_path, O_RDONLY);
+			if(new_File < 0){
+				perror("open");
+				return 1;
+			}
+			// send the file size
+			fstat(new_File, &st);
+			file_size = st.st_size;
+			if(send(newfd, &file_size, sizeof(file_size), 0) < 0)
+				{
+					perror("send1");
+					return 1;
+				}
+				// if the action "get-file-info" send the user id
 				if (strcmp(action,"get-file-info") == 0){
 				if(send(newfd, &st.st_uid, sizeof(st.st_uid), 0) < 0)
 					{
@@ -112,7 +131,7 @@ int main(void)
 						return 1;
 					}
 				}
-
+				// if the action "download-file" send to the client the file
 				else if(strcmp(action,"download-file") == 0){
 					char buf[file_size + 1];
 					memset(buf, 0 , sizeof(buf));
@@ -121,10 +140,12 @@ int main(void)
 					while(n_read != 0){
 						n_read =	read(new_File, buf , sizeof(buf));
 						for(i=0; i < n_read; i += n_write){
+
 						n_write =	send(newfd, buf + i, n_read - i , 0);
 						}
 					}
 				}
+				// close connection
 				close(newfd);
 				continue;
 	}
