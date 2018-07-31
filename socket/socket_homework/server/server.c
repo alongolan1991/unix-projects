@@ -144,6 +144,7 @@ int main(void)
 						n_write =	send(newfd, buf + i, n_read - i , 0);
 						}
 					}
+					free(buf);
 				}
 				// close connection
 				close(newfd);

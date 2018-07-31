@@ -125,7 +125,7 @@ int main(int argc, char *argv[])
 				printf("the file added to your directory\n");
 				close(new_File);
 		}
-
+free(buffer);
 }
 
 else{
