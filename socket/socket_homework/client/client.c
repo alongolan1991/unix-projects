@@ -97,14 +97,13 @@ int main(int argc, char *argv[])
 		int count = 0;
 		int total = 0;
 	int k;
-	char buffer[file_real_size ];
-	memset(buffer, 0, sizeof(buffer));
 
-	while ((count = recv(sock, &buffer[total], sizeof buffer - count, 0)) > 0)
+	char* buffer = (char*) malloc(file_real_size);
+	memset(buffer, 0, file_real_size);
+
+	while ((count = recv(sock, buffer + total, file_real_size - total, 0)) > 0)
 	{
-
 	    total += count;
-
 	}
 	if (count == -1)
 	{
@@ -122,7 +121,7 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 				// write the file the information
-				write(new_File, buffer, sizeof(buffer));
+				write(new_File, buffer, file_real_size);
 				printf("the file added to your directory\n");
 				close(new_File);
 		}

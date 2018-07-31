@@ -133,12 +133,12 @@ int main(void)
 				}
 				// if the action "download-file" send to the client the file
 				else if(strcmp(action,"download-file") == 0){
-					char buf[file_size + 1];
-					memset(buf, 0 , sizeof(buf));
+					char* buf = (char*) malloc(file_size + 1);
+					memset(buf, 0 , file_size + 1);
 					n_read = 1;
 					int k;
 					while(n_read != 0){
-						n_read =	read(new_File, buf , sizeof(buf));
+						n_read =	read(new_File, buf , file_size + 1);
 						for(i=0; i < n_read; i += n_write){
 
 						n_write =	send(newfd, buf + i, n_read - i , 0);
