@@ -20,7 +20,8 @@ int main(int argc, char *argv[])
 		printf("file need cotatin 2 arguments\n %d", argc);
 		return 1;
 	}
-
+	fd_set master;
+	fd_set read_fds;
 	int file_exists;
 	char file_name[20];
 	char action[14];
@@ -94,21 +95,39 @@ int main(int argc, char *argv[])
 
 	// if the action "download-file" get the file
 	else if (strcmp(action,"download-file") == 0){
-		int count = 0;
+		char command[2];
+		memset(command, 0, sizeof(command));
+		int count = 1;
 		int total = 0;
-	int k;
+		char* buffer = (char*) malloc(file_real_size);
+		memset(buffer, 0, file_real_size);
 
-	char* buffer = (char*) malloc(file_real_size);
-	memset(buffer, 0, file_real_size);
+		FD_ZERO(&master);
+		FD_ZERO(&read_fds);
 
-	while ((count = recv(sock, buffer + total, file_real_size - total, 0)) > 0)
-	{
-	    total += count;
+		FD_SET(0,&master);
+		FD_SET(sock,&master); // s is a socket descriptor
+
+		while(count != 0){
+			read_fds = master;
+			if (select(sock + 1,&read_fds,NULL,NULL,NULL) == -1){
+			perror("select:");
+			exit(1);
+			}
+
+			if (FD_ISSET(sock, &read_fds)){
+			count = recv(sock, buffer + total, file_real_size - total, 0);
+			total += count;
+		}
+		if (FD_ISSET(STDIN_FILENO, &read_fds)){
+					read(STDIN_FILENO,command,1);
+					if (strcmp(command,"p") == 0){
+							printf("the download pause!\n");
+							exit(1);
+					}
 	}
-	if (count == -1)
-	{
-	    perror("recv");
-	}
+}
+
 	// check if the file alreay exist
 	if(open(file_name,O_EXCL) != -1){
 		printf(" %s alreay exists\n", file_name);
